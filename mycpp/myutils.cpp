@@ -149,7 +149,7 @@ void startup::_customizeQDebugHandler(QtMsgType type,
     outFile.open(QIODevice::Append | QIODevice::Text);
 
     QTextStream qOutFile(&outFile);
-    qOutFile << out;
+    qOutFile << inputMsg << " " << location << qEndl;
     outFile.close();
 }
 
