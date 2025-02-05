@@ -5,6 +5,7 @@
 #include <QDateTime>
 #include <QApplication>
 #include <QSurfaceFormat>
+#include <QFile>
 
 void console::setColor(QTextStream& stream, Code code)
 {
@@ -88,7 +89,8 @@ void startup::_customizeQDebugHandler(QtMsgType type,
                                       const QMessageLogContext& context,
                                       const QString& msg)
 {
-    QTextStream qCout(stdout);
+    QString out;
+    QTextStream qOut(&out);
     QString qEndl("\n");
 
     QString timestamp = startup::_getTimestamp();  // current time and date info
@@ -99,44 +101,56 @@ void startup::_customizeQDebugHandler(QtMsgType type,
     locStream << context.file << ":" << context.line << "]";
 
     /* Begin append to standard out */
-    console::setColor(qCout, FG_BLACK);
+    console::setColor(qOut, FG_BLACK);
 
-    qCout << timestamp;
+    qOut << timestamp;
 
     // append type of message in custom color
     switch (type) {
         case QtInfoMsg:
-            console::setColor(qCout, FG_GREEN);
-            qCout << "[INFO] ";
+            console::setColor(qOut, FG_GREEN);
+            qOut << "[INFO] ";
             break;
         case QtDebugMsg:
-            console::setColor(qCout, FG_CYAN);
-            qCout << "[DEBUG] ";
+            console::setColor(qOut, FG_CYAN);
+            qOut << "[DEBUG] ";
             break;
         case QtWarningMsg:
-            console::setColor(qCout, FG_YELLOW);
-            qCout << "[WARN] ";
+            console::setColor(qOut, FG_YELLOW);
+            qOut << "[WARN] ";
             break;
         case QtCriticalMsg:
-            console::setColor(qCout, FG_ORANGE);
-            qCout << "[CRITICAL] ";
+            console::setColor(qOut, FG_ORANGE);
+            qOut << "[CRITICAL] ";
             break;
         case QtFatalMsg:
-            console::setColor(qCout, FG_RED);
-            qCout << "[FATAL] ";
+            console::setColor(qOut, FG_RED);
+            qOut << "[FATAL] ";
             break;
     }
 
-    console::setColor(qCout, FG_BLACK);
-    qCout << inputMsg;
+    console::setColor(qOut, FG_BLACK);
+    qOut << inputMsg;
 
     // append location if not an info type
     if (type != QtInfoMsg && context.file) {
-        console::setColor(qCout, FG_BLUE);
-        qCout << "  " << location;
+        console::setColor(qOut, FG_BLUE);
+        qOut << "  " << location;
     }
 
-    qCout << qEndl;
+    qOut << qEndl;
+
+    QTextStream qStdOut(stdout);
+    qStdOut << out;
+
+    QString outFilePath = QString(STR(PROJECT_PATH)) + "/log.txt";
+
+    QFile outFile(outFilePath);
+    outFile.open(QIODevice::Append | QIODevice::Text);
+
+    QTextStream qOutFile(&outFile);
+    qOutFile << out;
+    outFile.close();
 }
 
 void startup::setUpCustomLogging()
